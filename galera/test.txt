@@ -1,0 +1,25 @@
+# Galera Cluster Dockerfile
+FROM ubuntu:20.04
+LABEL maintainer="Binh Le <binhnd234@gmail.com>"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# update apt
+RUN apt-get update
+# install software-properties-common for key management
+RUN apt-get install -y software-properties-common
+# add the key for Mariadb Ubuntu repos
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv BC19DDBA
+# add the MariaDB repository for 8.0
+RUN add-apt-repository 'deb https://releases.galeracluster.com/galera-4/ubuntu bionic main'
+RUN add-apt-repository 'deb [trusted=yes] https://releases.galeracluster.com/mysql-wsrep-8.0/ubuntu bionic main'
+
+
+RUN apt-get update --allow-unauthenticated
+RUN apt-get install -y galera-4 mysql-wsrep-8.0 rsync
+
+# upload the locally created my.cnf (obviously this can go into the default MariaDB path
+COPY my.cnf /etc/mysql/my.cnf
+
+# open the ports required to connect to MySQL and for Galera SST / IST operations
+EXPOSE 3306 4444 4567 4568

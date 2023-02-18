@@ -1,0 +1,73 @@
+version: "3"
+networks:
+  galera-net:
+    driver: bridge
+services:
+  galera0:
+    image: bitnami/mariadb-galera
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
+      - MARIADB_GALERA_FORCE_SAFETOBOOTSTRAP=yes
+      - MARIADB_GALERA_CLUSTER_NAME=my-galera
+      - MARIADB_GALERA_MARIABACKUP_USER=backup_user
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=backup_password
+      - MARIADB_ROOT_PASSWORD=admin
+      - MARIADB_USER=user
+      - MARIADB_PASSWORD=password
+      - MARIADB_DATABASE=sdr
+    networks:
+      - galera-net
+    ports:
+      - 4306:3306
+    volumes:
+      - galera0-data:/bitnami/mariadb
+  galera1:
+    image: bitnami/mariadb-galera
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_NAME=my-galera
+      - MARIADB_ROOT_PASSWORD=admin
+      - MARIADB_GALERA_MARIABACKUP_USER=backup_user
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=backup_password
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera0
+    networks:
+      - galera-net
+    ports:
+      - 5306:3306
+    volumes:
+      - galera1-data:/bitnami/mariadb
+    depends_on:
+      - galera0
+  galera2:
+    image: bitnami/mariadb-galera
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_NAME=my-galera
+      - MYSQL_ROOT_PASSWORD=admin
+      - MARIADB_GALERA_MARIABACKUP_USER=backup_user
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=backup_password
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://galera0,galera1
+    networks:
+      - galera-net
+    ports:
+      - 6306:3306
+    volumes:
+      - galera2-data:/bitnami/mariadb
+    depends_on:
+      - galera0
+  controller:
+    image: severalnines/clustercontrol
+    restart: always
+    networks:
+      - galera-net
+    ports:
+      - 5000:80
+      - 5001:443
+volumes:
+  galera0-data:
+    driver: local
+  galera1-data:
+    driver: local
+  galera2-data:
+    driver: local

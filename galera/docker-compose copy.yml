@@ -1,0 +1,42 @@
+version: "3"
+networks:
+  galera-net:
+    driver: bridge
+services:
+  galera0:
+    image: bitnami/mariadb-galera
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
+      - MARIADB_GALERA_CLUSTER_NAME=my-galera
+      - MARIADB_GALERA_MARIABACKUP_USER=backup_user
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=backup_password
+      - MARIADB_ROOT_PASSWORD=admin
+      - MARIADB_USER=user
+      - MARIADB_PASSWORD=password
+      - MARIADB_DATABASE=sample
+    networks:
+      - galera-net
+    volumes:
+      - galera0-data:/bitnami/mariadb
+  galera1:
+    image: bitnami/mariadb-galera
+    restart: always
+    environment:
+      - MARIADB_GALERA_CLUSTER_NAME=my-galera
+      - MARIADB_GALERA_MARIABACKUP_USER=backup_user
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD=backup_password
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://mariadb-galera
+    networks:
+      - galera-net
+    volumes:
+      - galera1-data:/bitnami/mariadb
+    depends_on:
+      - galera0
+    links:
+      - galera0:mariadb-galera
+volumes:
+  galera0-data:
+    driver: local
+  galera1-data:
+    driver: local

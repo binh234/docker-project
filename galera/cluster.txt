@@ -1,0 +1,35 @@
+docker pull bitnami/mariadb-galera:latest
+
+Step 1: Bootstrap the cluster
+
+docker run -d --name galera-0 --network galera-net -e MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes -e MARIADB_GALERA_CLUSTER_NAME=my-galera -e MARIADB_GALERA_MARIABACKUP_USER=my_mariabackup_user -e MARIADB_GALERA_MARIABACKUP_PASSWORD=my_mariabackup_password -e MARIADB_ROOT_PASSWORD=my_root_password -e MARIADB_USER=my_user -e MARIADB_PASSWORD=my_password -e MARIADB_DATABASE=my_database bitnami/mariadb-galera:latest
+
+
+Step 2: Add nodes to the cluster
+
+docker run -d --name galera-1 --network galera-net --link galera-0:mariadb-galera -e MARIADB_GALERA_CLUSTER_NAME=my-galera -e MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://mariadb-galera -e MARIADB_GALERA_MARIABACKUP_USER=my_mariabackup_user -e MARIADB_GALERA_MARIABACKUP_PASSWORD=my_mariabackup_password bitnami/mariadb-galera:latest
+
+
+docker exec -it mariadb-galera-0 /bin/bash
+docker exec -it mariadb-galera-1 /bin/bash
+
+ip a
+
+ps -ef | grep mysql
+
+mysql -u my_user -p -h 172.17.0.3
+                  my_password
+
+SHOW STATUS LIKE '%cluster%';
+
+show databases;
+
+CREATE TABLE example ( id smallint unsigned not null auto_increment, name varchar(20) not null, constraint pk_example primary key (id) );
+INSERT INTO example ( id, name ) VALUES ( null, 'Sample data 1' );
+INSERT INTO example ( id, name ) VALUES ( null, 'Sample data 2' );
+
+GRANT ALL PRIVILEGES ON *.* TO 'username'@'localhost' IDENTIFIED BY 'password';
+SELECT user FROM mysql.user GROUP BY user;
+
+docker stop mariadb-galera-0
+docker stop mariadb-galera-1
